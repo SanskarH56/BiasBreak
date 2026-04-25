@@ -1,3 +1,11 @@
+# feature/backend
+.venv/
+**/.venv/
+backend/.venv/
+__pycache__/
+implementation_plan.md.resolved
+
+# frontend
 # dependencies
 node_modules/
 
@@ -15,4 +23,3 @@ yarn-error.log*
 
 # OS files
 .DS_Store
-
