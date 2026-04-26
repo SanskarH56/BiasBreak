@@ -22,4 +22,4 @@ yarn-error.log*
 
 # OS files
 .DS_Store
-tmp_runs/
+backend/tmp_runs
