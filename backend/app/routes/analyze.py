@@ -21,6 +21,7 @@ from app.utils.validators import (
 from app.services.preprocessing import preprocess_dataset
 from app.services.model import train_and_evaluate_model
 from app.services.fairness_metrics import analyze_fairness
+from app.utils.run_store import save_run
 
 router = APIRouter(prefix="/analyze", tags=["Analyze"])
 
@@ -94,14 +95,41 @@ async def analyze_data(
         disparity_summaries = [DisparitySummary(**d) for d in fairness_results["disparity_summaries"]]
         risk_flags = [RiskFlag(**r) for r in fairness_results["risk_flags"]]
         
-        return AnalyzeResponse(
+        response = AnalyzeResponse(
             status="success",
+            analysis_id=analysis_id,
             dataset_summary=dataset_summary,
             model_summary=model_summary,
             group_metrics=group_metrics,
             disparity_summaries=disparity_summaries,
             risk_flags=risk_flags
         )
+
+        # --- Persist run metadata (best-effort, never breaks the API) ---
+        save_run(
+            analysis_id=analysis_id,
+            target_column=target_column,
+            sensitive_column=sensitive_column,
+            feature_columns=features,
+            dataset_summary=summary_data,
+            baseline_metrics={
+                "accuracy":            model_results["accuracy"],
+                "group_metrics":       fairness_results["group_metrics"],
+                "disparity_summaries": fairness_results["disparity_summaries"],
+                "risk_flags":          fairness_results["risk_flags"],
+            },
+            # Raw CSV → lets /mitigate re-preprocess with any algorithm
+            raw_csv=file_content,
+            # Test-split arrays → lets /mitigate compute deltas vs baseline
+            predictions={
+                "y_test":         model_results["y_test"],
+                "y_pred":         model_results["y_pred"],
+                "y_prob":         model_results["y_prob"],
+                "sensitive_test": model_results["sensitive_test"],
+            },
+        )
+
+        return response
         
     except ValueError as e:
         # Catch our custom validation errors (like missing columns) and tell the user

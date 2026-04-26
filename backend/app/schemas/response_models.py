@@ -35,6 +35,7 @@ class RiskFlag(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     status: str
+    analysis_id: str
     dataset_summary: DatasetSummary
     model_summary: ModelSummary
     group_metrics: List[GroupMetric]
@@ -54,10 +55,18 @@ class MetricsBlock(BaseModel):
 class ComparisonSummary(BaseModel):
     before_mitigation: MetricsBlock
     after_mitigation: MetricsBlock
+    accuracy_change: Optional[float] = None
+    selection_rate_gap_change: Optional[float] = None
+    false_positive_rate_gap_change: Optional[float] = None
+    false_negative_rate_gap_change: Optional[float] = None
+    improved: Optional[bool] = None
 
 class MitigationResponse(BaseModel):
     status: str
     strategy_used: str
+    chosen_threshold: Optional[float]   # only set for threshold-tuning
+    baseline_accuracy: Optional[float]
+    after_accuracy: Optional[float]
     comparison: ComparisonSummary
 
 # ---------------------------------------------------------
