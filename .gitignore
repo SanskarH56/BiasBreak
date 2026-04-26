@@ -3,7 +3,6 @@
 **/.venv/
 backend/.venv/
 __pycache__/
-implementation_plan.md.resolved
 
 # frontend
 # dependencies
