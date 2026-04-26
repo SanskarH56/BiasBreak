@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function ColumnSelector({ columns }) {
+function ColumnSelector({ columns, rows }) {
   const [target, setTarget] = useState("");
   const [sensitive, setSensitive] = useState("");
 
   const navigate = useNavigate();
+
+  const targetKeywords = ["hired", "rejected", "selected", "approved", "accepted"];
+
+  const targetOptions = columns.filter((col) =>
+    targetKeywords.some((keyword) =>
+      col.toLowerCase().includes(keyword)
+    )
+  );
+
+  const sensitiveOptions = columns.filter((col) => col !== target);
 
   const handleContinue = () => {
     if (!target || !sensitive) {
@@ -17,23 +27,29 @@ function ColumnSelector({ columns }) {
       state: {
         target,
         sensitive,
+        rows,
       },
     });
   };
 
   return (
     <div className="max-w-md bg-white p-6 rounded shadow">
-      
       <label className="block mb-2 font-medium">
         Target Column
       </label>
+
       <select
         value={target}
-        onChange={(e) => setTarget(e.target.value)}
+        onChange={(e) => {
+          setTarget(e.target.value);
+          if (sensitive === e.target.value) {
+            setSensitive("");
+          }
+        }}
         className="w-full mb-4 p-2 border rounded"
       >
         <option value="">Select target</option>
-        {columns.map((col) => (
+        {targetOptions.map((col) => (
           <option key={col} value={col}>
             {col}
           </option>
@@ -43,18 +59,23 @@ function ColumnSelector({ columns }) {
       <label className="block mb-2 font-medium">
         Sensitive Column
       </label>
+
       <select
         value={sensitive}
         onChange={(e) => setSensitive(e.target.value)}
         className="w-full mb-4 p-2 border rounded"
       >
         <option value="">Select sensitive</option>
-        {columns.map((col) => (
+        {sensitiveOptions.map((col) => (
           <option key={col} value={col}>
             {col}
           </option>
         ))}
       </select>
+
+      <p className="text-xs text-gray-500 mb-4">
+        Target = final decision column. Sensitive = column to compare fairness across.
+      </p>
 
       <button
         onClick={handleContinue}

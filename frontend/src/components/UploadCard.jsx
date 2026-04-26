@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { uploadCSV } from "../api/BreakBiasApi"; // keep for later
+import Papa from "papaparse";
 
 function UploadCard() {
   const [file, setFile] = useState(null);
@@ -8,28 +8,41 @@ function UploadCard() {
 
   const navigate = useNavigate();
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!file) return;
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      // 🔴 MOCK DATA (use until backend is ready)
-      const data = {
-        columns: ["age", "gender", "experience", "hired"]
-      };
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const rows = results.data;
 
-      // 🟢 When backend is ready, replace above with:
-      // const data = await uploadCSV(file);
+          if (!rows.length) {
+            alert("Empty or invalid CSV");
+            setLoading(false);
+            return;
+          }
 
-      navigate("/columns", { state: { columns: data.columns } });
+          const columns = Object.keys(rows[0]);
 
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed");
-    } finally {
-      setLoading(false);
-    }
+          navigate("/columns", {
+            state: {
+              columns,
+              rows, // 🔥 important
+            },
+          });
+
+        } catch (err) {
+          console.error(err);
+          alert("Parsing failed");
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   return (

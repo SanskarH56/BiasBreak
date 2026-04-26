@@ -3,7 +3,9 @@ import ColumnSelector from "../components/ColumnSelector";
 
 function ColumnSelectionPage() {
   const location = useLocation();
+
   const columns = location.state?.columns || [];
+  const rows = location.state?.rows || [];
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -11,7 +13,7 @@ function ColumnSelectionPage() {
         Select Columns
       </h1>
 
-      <ColumnSelector columns={columns} />
+      <ColumnSelector columns={columns} rows={rows} />
     </div>
   );
 }
