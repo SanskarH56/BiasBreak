@@ -67,20 +67,20 @@ def run_tests():
     else:
         print(f"FAILED: {res_fr.text}")
 
+    return analysis_id
 if __name__ == "__main__":
-    run_tests()
+    analysis_id = run_tests()
     
-    print("\n--- 4. Testing Errors ---")
-    res_err1 = client.post("/mitigate/", json={"analysis_id": "fake", "method": "threshold_tuning"})
-    print(f"Bad ID: {res_err1.status_code} - {res_err1.text}")
-    
-    res_err2 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "magic_wand"})
-    print(f"Bad method: {res_err2.status_code} - {res_err2.text}")
-    
-    res_err3 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "feature_removal"})
-    print(f"Missing feature: {res_err3.status_code} - {res_err3.text}")
-    
-    res_err4 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "feature_removal", "params": {"feature_to_remove": "not_a_column"}})
-    print(f"Wrong feature: {res_err4.status_code} - {res_err4.text}")
-    
-run_tests()
+    if analysis_id:
+        print("\n--- 4. Testing Errors ---")
+        res_err1 = client.post("/mitigate/", json={"analysis_id": "fake", "method": "threshold_tuning"})
+        print(f"Bad ID: {res_err1.status_code} - {res_err1.text}")
+        
+        res_err2 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "magic_wand"})
+        print(f"Bad method: {res_err2.status_code} - {res_err2.text}")
+        
+        res_err3 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "feature_removal"})
+        print(f"Missing feature: {res_err3.status_code} - {res_err3.text}")
+        
+        res_err4 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "feature_removal", "params": {"feature_to_remove": "not_a_column"}})
+        print(f"Wrong feature: {res_err4.status_code} - {res_err4.text}")
