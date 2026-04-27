@@ -4,7 +4,6 @@
 backend/.venv/
 __pycache__/
 .pytest_cache/
-implementation_plan.md.resolved
 
 # frontend
 # dependencies
