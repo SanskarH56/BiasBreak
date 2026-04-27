@@ -84,3 +84,21 @@ if __name__ == "__main__":
         
         res_err4 = client.post("/mitigate/", json={"analysis_id": analysis_id, "method": "feature_removal", "params": {"feature_to_remove": "not_a_column"}})
         print(f"Wrong feature: {res_err4.status_code} - {res_err4.text}")
+        
+        print("\n--- 5. Testing POST /report/ (Baseline Only) ---")
+        res_rep1 = client.post("/report/", json={"analysis_id": analysis_id, "include_mitigation": False})
+        if res_rep1.status_code == 200:
+            rep_data1 = res_rep1.json()
+            print("SUCCESS: Baseline Report generated!")
+            print(f"Status: {rep_data1['status']}")
+        else:
+            print(f"FAILED: {res_rep1.status_code} - {res_rep1.text}")
+
+        print("\n--- 6. Testing POST /report/ (With Mitigation) ---")
+        res_rep2 = client.post("/report/", json={"analysis_id": analysis_id, "include_mitigation": True})
+        if res_rep2.status_code == 200:
+            rep_data2 = res_rep2.json()
+            print("SUCCESS: Mitigation Report generated!")
+            print(f"Status: {rep_data2['status']}")
+        else:
+            print(f"FAILED: {res_rep2.status_code} - {res_rep2.text}")
