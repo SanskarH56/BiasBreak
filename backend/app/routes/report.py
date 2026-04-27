@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.schemas.response_models import ReportResponse, ReportContent
+from app.services.gemini_report import generate_final_report
+from app.utils.run_store import run_exists
 
 router = APIRouter(prefix="/report", tags=["Report"])
 
@@ -17,38 +19,34 @@ async def generate_report(request: ReportRequest):
     if not request.analysis_id.strip():
         raise HTTPException(status_code=400, detail="analysis_id cannot be empty")
         
-    # 2. Return dummy JSON matching ReportResponse
-    # Later, this will call Gemini to generate the text content based on the data.
-    
-    executive_summary = (
-        "This is a dummy executive summary. The dataset showed significant disparate "
-        "impact for Group B. "
-    )
-    
-    detailed_findings = (
-        "1. Demographic Parity difference was 0.20.\n"
-        "2. Disparate Impact ratio was 0.75, which falls below the 0.8 threshold.\n"
-    )
-    
-    if request.include_mitigation:
-        executive_summary += "However, applying the reweighing mitigation strategy improved the fairness metrics to acceptable levels."
-        detailed_findings += "3. Post-mitigation, Disparate Impact improved to 0.96, successfully resolving the bias."
-    else:
-        executive_summary += "No mitigation strategies were applied."
-
-    recommendations = [
-        "Investigate the data collection process for Group B.",
-        "Consider applying reweighing in your production pipeline.",
-        "Regularly monitor these metrics as new data comes in."
-    ]
-
-    report_content = ReportContent(
-        executive_summary=executive_summary,
-        detailed_findings=detailed_findings,
-        recommendations=recommendations
-    )
-    
-    return ReportResponse(
-        status="success",
-        report=report_content
-    )
+    # Check if the run even exists
+    if not run_exists(request.analysis_id):
+        raise HTTPException(status_code=404, detail="Analysis ID not found. Please run an analysis first.")
+        
+    try:
+        # 2. Call the top-level report generation service
+        # This service automatically handles building the input, attempting Gemini,
+        # and gracefully falling back to a rule-based report if AI fails.
+        report_dict = generate_final_report(
+            analysis_id=request.analysis_id,
+            include_mitigation=request.include_mitigation
+        )
+        
+        # 3. Format into strict Pydantic models to preserve frontend-friendly response shape
+        report_content = ReportContent(
+            executive_summary=report_dict.get("executive_summary", ""),
+            detailed_findings=report_dict.get("detailed_findings", ""),
+            recommendations=report_dict.get("recommendations", [])
+        )
+        
+        return ReportResponse(
+            status="success",
+            report=report_content
+        )
+        
+    except ValueError as e:
+        # Handled value errors (like missing data)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # Unexpected server errors
+        raise HTTPException(status_code=500, detail=f"An error occurred while generating the report: {str(e)}")
