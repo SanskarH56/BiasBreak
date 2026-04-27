@@ -1,87 +1,123 @@
-function MetricCard({ title, value, icon, color = "accent" }) {
-  const colorMap = {
-    accent: {
-      glow: "rgba(100,119,255,0.12)",
-      border: "rgba(100,119,255,0.25)",
-      text: "#818cf8",
-      dot: "#6477ff",
-    },
-    emerald: {
-      glow: "rgba(16,185,129,0.1)",
-      border: "rgba(16,185,129,0.2)",
-      text: "#10b981",
-      dot: "#10b981",
-    },
-    rose: {
-      glow: "rgba(244,63,94,0.1)",
-      border: "rgba(244,63,94,0.2)",
-      text: "#f43f5e",
-      dot: "#f43f5e",
-    },
-  };
+// MetricCard.jsx
+import { motion } from "framer-motion";
 
-  const c = colorMap[color] || colorMap.accent;
+const TYPE_CONFIG = {
+  neutral: {
+    valueClass: "text-slate-950",
+    iconClass: "bg-slate-50 text-slate-600 border-slate-200",
+    glowClass: "bg-slate-300",
+    accentClass: "from-slate-50 via-white to-white",
+  },
+  primary: {
+    valueClass: "text-indigo-700",
+    iconClass: "bg-indigo-50 text-indigo-700 border-indigo-100",
+    glowClass: "bg-indigo-400",
+    accentClass: "from-indigo-50 via-white to-white",
+  },
+  success: {
+    valueClass: "text-emerald-700",
+    iconClass: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    glowClass: "bg-emerald-400",
+    accentClass: "from-emerald-50 via-white to-white",
+  },
+  danger: {
+    valueClass: "text-rose-700",
+    iconClass: "bg-rose-50 text-rose-700 border-rose-100",
+    glowClass: "bg-rose-400",
+    accentClass: "from-rose-50 via-white to-white",
+  },
+  warning: {
+    valueClass: "text-amber-700",
+    iconClass: "bg-amber-50 text-amber-700 border-amber-100",
+    glowClass: "bg-amber-400",
+    accentClass: "from-amber-50 via-white to-white",
+  },
+};
+
+const TREND_CONFIG = {
+  up: {
+    prefix: "↑",
+    className: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  },
+  down: {
+    prefix: "↓",
+    className: "bg-rose-50 text-rose-700 border-rose-100",
+  },
+  neutral: {
+    prefix: "",
+    className: "bg-slate-50 text-slate-600 border-slate-200",
+  },
+};
+
+export default function MetricCard({
+  title,
+  value,
+  sub,
+  trend,
+  trendDir = "neutral",
+  type = "neutral",
+  icon,
+  delay = 0,
+}) {
+  const config = TYPE_CONFIG[type] || TYPE_CONFIG.neutral;
+  const trendConfig = TREND_CONFIG[trendDir] || TREND_CONFIG.neutral;
 
   return (
-    <div
-      style={{
-        background: "linear-gradient(135deg, #161b2e 0%, #1c2340 100%)",
-        border: `1px solid ${c.border}`,
-        borderRadius: "16px",
-        padding: "24px 28px",
-        boxShadow: `0 0 0 1px rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.4), 0 0 60px ${c.glow}`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        cursor: "default",
-        position: "relative",
-        overflow: "hidden",
+    <motion.div
+      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        duration: 0.45,
+        delay,
+        ease: [0.16, 1, 0.3, 1],
       }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = "translateY(-3px)";
-        e.currentTarget.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.05), 0 16px 40px rgba(0,0,0,0.5), 0 0 80px ${c.glow}`;
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.4), 0 0 60px ${c.glow}`;
-      }}
+      className="card card-hover group relative min-h-[176px] overflow-hidden"
     >
-      {/* Subtle top line accent */}
-      <div style={{
-        position: "absolute", top: 0, left: "20%", right: "20%", height: "1px",
-        background: `linear-gradient(90deg, transparent, ${c.dot}, transparent)`,
-        opacity: 0.8,
-      }} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${config.accentClass}`} />
 
-      <p style={{
-        fontSize: "11px",
-        fontWeight: 600,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: c.text,
-        marginBottom: "12px",
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-      }}>
-        <span style={{
-          width: 6, height: 6, borderRadius: "50%",
-          background: c.dot, display: "inline-block",
-          boxShadow: `0 0 6px ${c.dot}`,
-        }} />
-        {title}
-      </p>
+      <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full ${config.glowClass} opacity-10 blur-2xl transition group-hover:opacity-20`} />
+      <div className={`absolute bottom-0 left-0 h-1 w-full ${config.glowClass} opacity-70`} />
 
-      <p style={{
-        fontFamily: "'Space Mono', monospace",
-        fontSize: "40px",
-        fontWeight: 700,
-        color: "#f1f5f9",
-        lineHeight: 1,
-        letterSpacing: "-1px",
-      }}>
-        {value.toLocaleString()}
-      </p>
-    </div>
+      <div className="relative z-10 flex h-full flex-col justify-between p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-400">
+              {title}
+            </p>
+
+            {sub && (
+              <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-500">
+                {sub}
+              </p>
+            )}
+          </div>
+
+          {icon && (
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm transition group-hover:-translate-y-0.5 ${config.iconClass}`}
+            >
+              {icon}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 flex items-end justify-between gap-3">
+          <p
+            className={`font-mono text-[2.15rem] font-extrabold leading-none tracking-[-0.07em] ${config.valueClass}`}
+          >
+            {value}
+          </p>
+
+          {trend && (
+            <span
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.06em] ${trendConfig.className}`}
+            >
+              {trendConfig.prefix && <span>{trendConfig.prefix}</span>}
+              {trend}
+            </span>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 }
-
-export default MetricCard;
