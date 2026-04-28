@@ -3,6 +3,11 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
+function ColumnSelector({ columns, rows, file }) {
+  const [target, setTarget] = useState("");
+  const [sensitive, setSensitive] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 const targetKeywords = [
   "hired",
   "rejected",
@@ -129,6 +134,36 @@ function ChevronDownIcon() {
   );
 }
 
+  const handleContinue = async () => {
+    if (!target || !sensitive) { alert("Please select both columns"); return; }
+    if (!file) { alert("File missing. Please go back and re-upload."); return; }
+    
+    setLoading(true);
+    try {
+      const features = columns.filter(c => c !== target && c !== sensitive).join(",");
+      
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("target_column", target);
+      formData.append("sensitive_column", sensitive);
+      formData.append("feature_columns", features);
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/analyze/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Analysis failed");
+
+      // Pass the API metrics and analysis_id to the dashboard
+      navigate("/dashboard", { state: { target, sensitive, rows, analysis_id: data.analysis_id, metrics: data, file, columns } });
+    } catch (err) {
+      console.error(err);
+      alert("Error during analysis: " + err.message);
+    } finally {
+      setLoading(false);
+    }
 function CheckIcon({ className = "h-4 w-4" }) {
   return (
     <svg
@@ -573,6 +608,30 @@ function MappingCard({
 function ReadinessPanel({ target, sensitive, rows }) {
   const ready = Boolean(target && sensitive);
 
+      <button
+        onClick={handleContinue}
+        disabled={loading}
+        style={{
+          width: "100%",
+          background: loading ? "rgba(99,120,255,0.1)" : "linear-gradient(135deg, #6477ff 0%, #818cf8 100%)",
+          color: loading ? "#475569" : "#fff",
+          border: loading ? "1px solid rgba(99,120,255,0.15)" : "none",
+          padding: "13px",
+          borderRadius: "10px",
+          fontSize: "14px",
+          fontWeight: 600,
+          cursor: loading ? "not-allowed" : "pointer",
+          fontFamily: "'DM Sans', sans-serif",
+          boxShadow: loading ? "none" : "0 4px 20px rgba(100,119,255,0.35)",
+          transition: "all 0.2s ease",
+          letterSpacing: "0.02em",
+          marginTop: "8px",
+        }}
+        onMouseEnter={e => { if(!loading) { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 8px 28px rgba(100,119,255,0.5)"; } }}
+        onMouseLeave={e => { if(!loading) { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 20px rgba(100,119,255,0.35)"; } }}
+      >
+        {loading ? "Analyzing..." : "Run Fairness Analysis →"}
+      </button>
   return (
     <div className={`callout ${ready ? "callout-success" : "callout-warning"}`}>
       <div

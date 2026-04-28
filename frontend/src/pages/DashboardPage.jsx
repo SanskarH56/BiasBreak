@@ -16,6 +16,19 @@ const STEPS = [
   { number: "04", title: "Report", description: "Generate output" },
 ];
 
+  const { target, sensitive, rows, analysis_id, metrics, file, columns } = location.state || {};
+  
+  let total = metrics?.model_summary?.total_instances || 0;
+  let selected = 0;
+  let rejected = 0;
+
+  if (rows && target) {
+    if (total === 0) total = rows.length;
+    rows.forEach((row) => {
+      if (row[target] == 1) selected++;
+      else rejected++;
+    });
+  }
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
   show: {
@@ -196,6 +209,39 @@ function LoadingScreen() {
             </div>
           </div>
 
+      <motion.div
+        style={{ maxWidth: "1100px", margin: "0 auto", padding: "36px 32px" }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Top Bar with Back Button */}
+        <div style={{ marginBottom: "24px", display: "flex", justifyContent: "flex-start" }}>
+          <button
+            onClick={() => navigate("/columns", { state: { rows, file, columns } })}
+            style={{
+              background: "transparent",
+              color: "#818cf8",
+              border: "1px solid rgba(100,119,255,0.25)",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={e => { e.target.style.background = "rgba(100,119,255,0.1)"; e.target.style.borderColor = "rgba(100,119,255,0.4)"; }}
+            onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.borderColor = "rgba(100,119,255,0.25)"; }}
+          >
+            ← Reconfigure Columns
+          </button>
+        </div>
+
+        {/* Page header */}
+        <div style={{ marginBottom: "32px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#6477ff", marginBottom: "8px" }}>
+            Fairness Dashboard
           <h1 className="mt-7 text-3xl font-extrabold tracking-[-0.055em] text-slate-950">
             Auditing your dataset
           </h1>
@@ -546,6 +592,46 @@ export default function DashboardPage() {
         </div>
       </nav>
 
+        <FairnessChart 
+          rows={rows} 
+          target={target} 
+          sensitive={sensitive} 
+          groupMetrics={metrics?.group_metrics}
+        />
+        <BiasWarningCard 
+          rows={rows} 
+          target={target} 
+          sensitive={sensitive} 
+          baselineGap={metrics?.disparity_summaries?.find(d => d.metric_name === "Selection Rate Gap")?.value}
+        />
+        <MitigationPanel 
+          rows={rows} 
+          target={target} 
+          sensitive={sensitive} 
+          analysis_id={analysis_id} 
+          featuresAnalyzed={metrics?.dataset_summary?.features_analyzed || []} 
+          baselineGap={metrics?.disparity_summaries?.find(d => d.metric_name === "Selection Rate Gap")?.value}
+        />
+
+        <button
+          onClick={() => navigate("/report", { state: { target, sensitive, rows, analysis_id, metrics } })}
+          style={{
+            marginTop: "28px",
+            background: "linear-gradient(135deg, #6477ff 0%, #818cf8 100%)",
+            color: "#fff",
+            border: "none",
+            padding: "13px 28px",
+            borderRadius: "10px",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+            boxShadow: "0 4px 20px rgba(100,119,255,0.35)",
+            transition: "all 0.2s ease",
+            letterSpacing: "0.01em",
+          }}
+          onMouseEnter={e => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 8px 28px rgba(100,119,255,0.5)"; }}
+          onMouseLeave={e => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 20px rgba(100,119,255,0.35)"; }}
       <main className="page-container py-8 lg:py-10">
         <motion.section
           variants={stagger}

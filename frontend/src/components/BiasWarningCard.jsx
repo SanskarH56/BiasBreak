@@ -1,3 +1,40 @@
+function BiasWarningCard({ rows, target, sensitive, baselineGap }) {
+  let gap = 0;
+
+  if (baselineGap !== undefined && baselineGap !== null) {
+    gap = Number((Math.abs(baselineGap) * 100).toFixed(1));
+  } else {
+    const groups = {};
+
+    rows.forEach((row) => {
+      const group = row[sensitive];
+      const decision = row[target];
+      if (!groups[group]) groups[group] = { total: 0, selected: 0 };
+      groups[group].total += 1;
+      if (decision == 1) groups[group].selected += 1;
+    });
+
+    const rates = Object.entries(groups).map(([group, data]) => ({
+      group,
+      rate: data.selected / data.total,
+    }));
+
+    const maxRate = Math.max(...rates.map((item) => item.rate));
+    const minRate = Math.min(...rates.map((item) => item.rate));
+    gap = Number(((maxRate - minRate) * 100).toFixed(1));
+  }
+
+  let status = "Low Risk";
+  let message = "Selection rates are fairly balanced across groups.";
+  let theme = {
+    bg: "rgba(16,185,129,0.07)",
+    border: "rgba(16,185,129,0.2)",
+    glow: "rgba(16,185,129,0.1)",
+    label: "#10b981",
+    badge: { bg: "rgba(16,185,129,0.15)", border: "rgba(16,185,129,0.3)", color: "#10b981" },
+    icon: "✓",
+    barColor: "#10b981",
+    barBg: "rgba(16,185,129,0.1)",
 // BiasWarningCard.jsx
 import { useMemo } from "react";
 

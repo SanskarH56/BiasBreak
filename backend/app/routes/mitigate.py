@@ -49,7 +49,7 @@ async def mitigate_bias(request: MitigateRequest):
 
     # --- Basic validation ---
     if not request.analysis_id.strip():
-        raise HTTPException(status_code=400, detail="analysis_id cannot be empty.")
+        raise HTTPException(status_code=400, detail="Oops! We lost your analysis ID. Please go back and re-run the fairness analysis.")
     if not request.method.strip():
         raise HTTPException(status_code=400, detail="method cannot be empty.")
 
@@ -57,8 +57,8 @@ async def mitigate_bias(request: MitigateRequest):
     if request.method not in supported_methods:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown method '{request.method}'. "
-                   f"Supported: {supported_methods}",
+            detail=f"Oops! We don't support the mitigation method '{request.method}' yet. "
+                   f"Try one of these: {supported_methods}",
         )
 
     # --- Run mitigation ---
@@ -79,7 +79,7 @@ async def mitigate_bias(request: MitigateRequest):
                 raise HTTPException(status_code=400, detail=str(e))
 
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail="We couldn't find the original analysis. Please re-run the fairness analysis first.")
 
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))

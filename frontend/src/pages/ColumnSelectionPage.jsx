@@ -236,6 +236,7 @@ export default function ColumnSelectionPage() {
 
   const columns = location.state?.columns || [];
   const rows = location.state?.rows || [];
+  const file = location.state?.file;
   const metadata = location.state?.metadata || null;
   const fileName = location.state?.fileName || metadata?.fileName || "Uploaded dataset";
 
@@ -412,6 +413,8 @@ export default function ColumnSelectionPage() {
                   </div>
                 </div>
 
+        <ColumnSelector columns={columns} rows={rows} file={file} />
+      </div>
                 <span className="badge badge-success">Valid</span>
               </div>
 

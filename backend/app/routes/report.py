@@ -17,11 +17,11 @@ async def generate_report(request: ReportRequest):
     """
     # 1. Validate input
     if not request.analysis_id.strip():
-        raise HTTPException(status_code=400, detail="analysis_id cannot be empty")
+        raise HTTPException(status_code=400, detail="Oops! We lost your analysis ID. Please go back and re-run the fairness analysis.")
         
     # Check if the run even exists
     if not run_exists(request.analysis_id):
-        raise HTTPException(status_code=404, detail="Analysis ID not found. Please run an analysis first.")
+        raise HTTPException(status_code=404, detail="We couldn't find any results for this analysis. Please try running the fairness analysis again.")
         
     try:
         # 2. Call the top-level report generation service

@@ -14,7 +14,7 @@ def validate_target_column(df: pd.DataFrame, target_column: str):
     validate_columns_exist(df, [target_column])
     
     if df[target_column].isnull().all():
-        raise ValueError(f"The target column '{target_column}' is completely empty (contains only missing values).")
+        raise ValueError(f"The target column '{target_column}' doesn't contain any data. Please choose a valid column with outcomes.")
 
 def validate_sensitive_column(df: pd.DataFrame, sensitive_column: str):
     """Validate that the sensitive attribute column exists and represents discrete groups."""
@@ -24,20 +24,19 @@ def validate_sensitive_column(df: pd.DataFrame, sensitive_column: str):
     
     if unique_values <= 1:
         raise ValueError(
-            f"The sensitive column '{sensitive_column}' must have more than one unique value "
-            "to measure bias between different groups."
+            f"The sensitive column '{sensitive_column}' only has one group. We need at least two groups (like 'Male' and 'Female') to measure bias."
         )
         
     if unique_values > 50:
         raise ValueError(
             f"The sensitive column '{sensitive_column}' has too many unique values ({unique_values}). "
-            "It should represent distinct demographic groups (like age groups, gender, etc.), not a continuous number."
+            "Please select a categorical column representing distinct groups, not a continuous number."
         )
 
 def validate_feature_columns(df: pd.DataFrame, feature_columns: List[str]):
     """Validate that feature columns are provided and exist in the dataset."""
     if not feature_columns:
-        raise ValueError("You must provide at least one feature column for the model to use.")
+        raise ValueError("Please select at least one feature column.")
         
     validate_columns_exist(df, feature_columns)
 
@@ -50,6 +49,6 @@ def validate_binary_target(df: pd.DataFrame, target_column: str):
     
     if len(unique_values) != 2:
         raise ValueError(
-            f"The target column '{target_column}' must be binary (exactly 2 classes, like Yes/No or 1/0) "
-            f"for this analysis. Found {len(unique_values)} unique value(s): {unique_values.tolist()}"
+            f"The target column '{target_column}' must be binary (exactly 2 outcomes, like Yes/No or 1/0). "
+            f"We found {len(unique_values)} outcome(s): {unique_values.tolist()}"
         )

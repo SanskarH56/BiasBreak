@@ -62,7 +62,7 @@ def generate_gemini_report(report_input: dict) -> dict:
 
     # Configure the Gemini client
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
     data_str = json.dumps(report_input, indent=2, default=str)
     

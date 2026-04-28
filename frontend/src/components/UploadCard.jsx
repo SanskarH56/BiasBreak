@@ -214,6 +214,17 @@ export default function UploadCard() {
       header: true,
       preview: 8,
       skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const rows = results.data;
+          if (!rows.length) { alert("Empty or invalid CSV"); setLoading(false); return; }
+          const columns = Object.keys(rows[0]);
+          navigate("/columns", { state: { columns, rows, file } });
+        } catch (err) {
+          console.error(err);
+          alert("Parsing failed");
+        } finally {
+          setLoading(false);
       complete: (result) => {
         const firstRow = result.data?.[0];
         const columns = normalizeColumns(firstRow);
