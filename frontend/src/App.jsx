@@ -1,10 +1,10 @@
+// App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import UploadPage from "./pages/UploadPage";
 import ColumnSelectionPage from "./pages/ColumnSelectionPage";
 import DashboardPage from "./pages/DashboardPage";
 import ReportPage from "./pages/ReportPage";
-
 
 function App() {
   return (
@@ -20,4 +20,3 @@ function App() {
 }
 
 export default App;
-    
