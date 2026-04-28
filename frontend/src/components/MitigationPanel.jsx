@@ -1,7 +1,10 @@
 import { useState } from "react";
 
-function MitigationPanel({ rows, target, sensitive }) {
-  const [afterRows, setAfterRows] = useState(null);
+function MitigationPanel({ rows, target, sensitive, analysis_id, featuresAnalyzed = [], baselineGap }) {
+  const [method, setMethod] = useState("threshold_tuning");
+  const [featureToRemove, setFeatureToRemove] = useState(featuresAnalyzed[0] || sensitive);
+  const [afterGap, setAfterGap] = useState(null);
+  const [improvement, setImprovement] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const calculateGap = (data) => {
@@ -18,21 +21,42 @@ function MitigationPanel({ rows, target, sensitive }) {
     return ((max - min) * 100).toFixed(1);
   };
 
-  const applyMitigation = () => {
+  const applyMitigation = async () => {
     setLoading(true);
-    setTimeout(() => {
-      const newRows = rows.map((row) => ({
-        ...row,
-        [target]: Math.random() > 0.5 ? 1 : 0,
-      }));
-      setAfterRows(newRows);
+    try {
+      const payload = {
+        analysis_id: analysis_id,
+        method: method
+      };
+      if (method === "feature_removal") {
+        if (!featureToRemove) throw new Error("Please select a feature to remove.");
+        payload.params = { feature_to_remove: featureToRemove };
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/mitigate/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Mitigation failed");
+
+      const gapSummary = data.comparison.after_mitigation.disparity_summaries.find(d => d.metric_name === "Selection Rate Gap");
+      const afterVal = gapSummary ? (gapSummary.value * 100).toFixed(1) : "0.0";
+      
+      setAfterGap(afterVal);
+      setImprovement((parseFloat(beforeGap) - parseFloat(afterVal)).toFixed(1));
+    } catch (err) {
+      console.error(err);
+      alert("Error applying mitigation: " + err.message);
+    } finally {
       setLoading(false);
-    }, 900);
+    }
   };
 
-  const beforeGap = calculateGap(rows);
-  const afterGap = afterRows ? calculateGap(afterRows) : null;
-  const improvement = afterGap ? (parseFloat(beforeGap) - parseFloat(afterGap)).toFixed(1) : null;
+  const beforeGap = baselineGap !== undefined && baselineGap !== null 
+    ? (baselineGap * 100).toFixed(1) 
+    : calculateGap(rows);
 
   return (
     <div style={{
@@ -43,7 +67,7 @@ function MitigationPanel({ rows, target, sensitive }) {
       marginTop: "20px",
       boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
         <div>
           <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#64748b", marginBottom: "6px" }}>
             Remediation
@@ -53,36 +77,85 @@ function MitigationPanel({ rows, target, sensitive }) {
           </h2>
         </div>
 
-        <button
-          onClick={applyMitigation}
-          disabled={loading}
-          style={{
-            background: loading ? "rgba(16,185,129,0.1)" : "linear-gradient(135deg, #059669 0%, #10b981 100%)",
-            color: loading ? "#10b981" : "#fff",
-            border: loading ? "1px solid rgba(16,185,129,0.3)" : "none",
-            padding: "11px 22px",
-            borderRadius: "10px",
-            fontSize: "13px",
-            fontWeight: 600,
-            cursor: loading ? "not-allowed" : "pointer",
-            fontFamily: "'DM Sans', sans-serif",
-            boxShadow: loading ? "none" : "0 4px 16px rgba(16,185,129,0.3)",
-            transition: "all 0.2s ease",
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-            letterSpacing: "0.01em",
-          }}
-          onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(16,185,129,0.4)"; }}}
-          onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = loading ? "none" : "0 4px 16px rgba(16,185,129,0.3)"; }}
-        >
-          {loading ? (
-            <>
-              <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span>
-              Applying...
-            </>
-          ) : "⚡ Apply Mitigation"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <select
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            disabled={loading}
+            style={{
+              background: "rgba(100,119,255,0.05)",
+              border: "1px solid rgba(100,119,255,0.2)",
+              color: "#f8fafc",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontFamily: "'DM Sans', sans-serif",
+              outline: "none",
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            <option value="threshold_tuning" style={{ background: "#1c2340", color: "#f8fafc" }}>Threshold Tuning</option>
+            <option value="feature_removal" style={{ background: "#1c2340", color: "#f8fafc" }}>Feature Removal</option>
+          </select>
+
+          {method === "feature_removal" && (
+            <select
+              value={featureToRemove}
+              onChange={(e) => setFeatureToRemove(e.target.value)}
+              disabled={loading}
+              style={{
+                background: "rgba(244,63,94,0.05)",
+                border: "1px solid rgba(244,63,94,0.2)",
+                color: "#f8fafc",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                fontFamily: "'DM Sans', sans-serif",
+                outline: "none",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {featuresAnalyzed.length > 0 ? (
+                featuresAnalyzed.map(f => (
+                  <option key={f} value={f} style={{ background: "#1c2340", color: "#f8fafc" }}>Drop: {f}</option>
+                ))
+              ) : (
+                <option value="" style={{ background: "#1c2340", color: "#f8fafc" }}>No features found</option>
+              )}
+            </select>
+          )}
+
+          <button
+            onClick={applyMitigation}
+            disabled={loading}
+            style={{
+              background: loading ? "rgba(16,185,129,0.1)" : "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+              color: loading ? "#10b981" : "#fff",
+              border: loading ? "1px solid rgba(16,185,129,0.3)" : "none",
+              padding: "11px 22px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              boxShadow: loading ? "none" : "0 4px 16px rgba(16,185,129,0.3)",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              letterSpacing: "0.01em",
+            }}
+            onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(16,185,129,0.4)"; }}}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = loading ? "none" : "0 4px 16px rgba(16,185,129,0.3)"; }}
+          >
+            {loading ? (
+              <>
+                <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>◌</span>
+                Applying...
+              </>
+            ) : "⚡ Apply"}
+          </button>
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>

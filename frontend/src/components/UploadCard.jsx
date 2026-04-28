@@ -26,7 +26,7 @@ function UploadCard() {
           const rows = results.data;
           if (!rows.length) { alert("Empty or invalid CSV"); setLoading(false); return; }
           const columns = Object.keys(rows[0]);
-          navigate("/columns", { state: { columns, rows } });
+          navigate("/columns", { state: { columns, rows, file } });
         } catch (err) {
           console.error(err);
           alert("Parsing failed");

@@ -24,21 +24,29 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-function FairnessChart({ rows, target, sensitive }) {
-  const groups = {};
+function FairnessChart({ rows, target, sensitive, groupMetrics }) {
+  let chartData = [];
 
-  rows.forEach((row) => {
-    const group = row[sensitive];
-    const decision = row[target];
-    if (!groups[group]) groups[group] = { group, total: 0, selected: 0 };
-    groups[group].total += 1;
-    if (decision == 1) groups[group].selected += 1;
-  });
+  if (groupMetrics && groupMetrics.length > 0) {
+    chartData = groupMetrics.map((item) => ({
+      group: item.group_name,
+      selectionRate: Number((item.pass_rate * 100).toFixed(1)),
+    }));
+  } else {
+    const groups = {};
+    rows.forEach((row) => {
+      const group = row[sensitive];
+      const decision = row[target];
+      if (!groups[group]) groups[group] = { group, total: 0, selected: 0 };
+      groups[group].total += 1;
+      if (decision == 1) groups[group].selected += 1;
+    });
 
-  const chartData = Object.values(groups).map((item) => ({
-    group: item.group,
-    selectionRate: Number(((item.selected / item.total) * 100).toFixed(1)),
-  }));
+    chartData = Object.values(groups).map((item) => ({
+      group: item.group,
+      selectionRate: Number(((item.selected / item.total) * 100).toFixed(1)),
+    }));
+  }
 
   return (
     <div style={{

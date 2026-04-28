@@ -5,6 +5,7 @@ function ColumnSelectionPage() {
   const location = useLocation();
   const columns = location.state?.columns || [];
   const rows = location.state?.rows || [];
+  const file = location.state?.file;
 
   return (
     <div style={{
@@ -49,7 +50,7 @@ function ColumnSelectionPage() {
           </p>
         </div>
 
-        <ColumnSelector columns={columns} rows={rows} />
+        <ColumnSelector columns={columns} rows={rows} file={file} />
       </div>
     </div>
   );

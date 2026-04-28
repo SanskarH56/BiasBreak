@@ -9,14 +9,14 @@ function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { target, sensitive, rows } = location.state || {};
-
-  let total = 0;
+  const { target, sensitive, rows, analysis_id, metrics, file, columns } = location.state || {};
+  
+  let total = metrics?.model_summary?.total_instances || 0;
   let selected = 0;
   let rejected = 0;
 
   if (rows && target) {
-    total = rows.length;
+    if (total === 0) total = rows.length;
     rows.forEach((row) => {
       if (row[target] == 1) selected++;
       else rejected++;
@@ -84,6 +84,29 @@ function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
+        {/* Top Bar with Back Button */}
+        <div style={{ marginBottom: "24px", display: "flex", justifyContent: "flex-start" }}>
+          <button
+            onClick={() => navigate("/columns", { state: { rows, file, columns } })}
+            style={{
+              background: "transparent",
+              color: "#818cf8",
+              border: "1px solid rgba(100,119,255,0.25)",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={e => { e.target.style.background = "rgba(100,119,255,0.1)"; e.target.style.borderColor = "rgba(100,119,255,0.4)"; }}
+            onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.borderColor = "rgba(100,119,255,0.25)"; }}
+          >
+            ← Reconfigure Columns
+          </button>
+        </div>
+
         {/* Page header */}
         <div style={{ marginBottom: "32px" }}>
           <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#6477ff", marginBottom: "8px" }}>
@@ -128,12 +151,29 @@ function DashboardPage() {
           <MetricCard title="Rejected" value={rejected} color="rose" />
         </div>
 
-        <FairnessChart rows={rows} target={target} sensitive={sensitive} />
-        <BiasWarningCard rows={rows} target={target} sensitive={sensitive} />
-        <MitigationPanel rows={rows} target={target} sensitive={sensitive} />
+        <FairnessChart 
+          rows={rows} 
+          target={target} 
+          sensitive={sensitive} 
+          groupMetrics={metrics?.group_metrics}
+        />
+        <BiasWarningCard 
+          rows={rows} 
+          target={target} 
+          sensitive={sensitive} 
+          baselineGap={metrics?.disparity_summaries?.find(d => d.metric_name === "Selection Rate Gap")?.value}
+        />
+        <MitigationPanel 
+          rows={rows} 
+          target={target} 
+          sensitive={sensitive} 
+          analysis_id={analysis_id} 
+          featuresAnalyzed={metrics?.dataset_summary?.features_analyzed || []} 
+          baselineGap={metrics?.disparity_summaries?.find(d => d.metric_name === "Selection Rate Gap")?.value}
+        />
 
         <button
-          onClick={() => navigate("/report", { state: { target, sensitive, rows } })}
+          onClick={() => navigate("/report", { state: { target, sensitive, rows, analysis_id, metrics } })}
           style={{
             marginTop: "28px",
             background: "linear-gradient(135deg, #6477ff 0%, #818cf8 100%)",

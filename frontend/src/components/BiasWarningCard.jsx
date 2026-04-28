@@ -1,22 +1,28 @@
-function BiasWarningCard({ rows, target, sensitive }) {
-  const groups = {};
+function BiasWarningCard({ rows, target, sensitive, baselineGap }) {
+  let gap = 0;
 
-  rows.forEach((row) => {
-    const group = row[sensitive];
-    const decision = row[target];
-    if (!groups[group]) groups[group] = { total: 0, selected: 0 };
-    groups[group].total += 1;
-    if (decision == 1) groups[group].selected += 1;
-  });
+  if (baselineGap !== undefined && baselineGap !== null) {
+    gap = Number((Math.abs(baselineGap) * 100).toFixed(1));
+  } else {
+    const groups = {};
 
-  const rates = Object.entries(groups).map(([group, data]) => ({
-    group,
-    rate: data.selected / data.total,
-  }));
+    rows.forEach((row) => {
+      const group = row[sensitive];
+      const decision = row[target];
+      if (!groups[group]) groups[group] = { total: 0, selected: 0 };
+      groups[group].total += 1;
+      if (decision == 1) groups[group].selected += 1;
+    });
 
-  const maxRate = Math.max(...rates.map((item) => item.rate));
-  const minRate = Math.min(...rates.map((item) => item.rate));
-  const gap = Number(((maxRate - minRate) * 100).toFixed(1));
+    const rates = Object.entries(groups).map(([group, data]) => ({
+      group,
+      rate: data.selected / data.total,
+    }));
+
+    const maxRate = Math.max(...rates.map((item) => item.rate));
+    const minRate = Math.min(...rates.map((item) => item.rate));
+    gap = Number(((maxRate - minRate) * 100).toFixed(1));
+  }
 
   let status = "Low Risk";
   let message = "Selection rates are fairly balanced across groups.";

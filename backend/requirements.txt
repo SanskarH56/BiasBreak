@@ -6,5 +6,5 @@ python-multipart==0.0.6
 pydantic==2.5.2
 
 # Optional placeholders for later
-google-generativeai==0.3.1 # Gemini SDK
+google-generativeai>=0.7.0    # Gemini SDK
 python-dotenv==1.0.0       # For loading environment variables from .env
